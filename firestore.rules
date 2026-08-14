@@ -1,0 +1,135 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isModerator() {
+      return isAuthenticated() &&
+             (isAdmin() ||
+              exists(/databases/$(database)/documents/moderators/$(request.auth.uid)));
+    }
+
+    function hasValidUserProfile() {
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    // Users collection
+    match /users/{userId} {
+      // Users can read and write their own profile
+      allow read, write: if isOwner(userId) && hasValidUserProfile();
+
+      // Admins can read all user profiles
+      allow read: if isAdmin();
+
+      // Users can read other users' public profiles (for issue attribution)
+      allow read: if resource.data.get('isPublic', true) == true;
+    }
+
+    // Issues collection
+    match /issues/{issueId} {
+      // Anyone can read issues (public feed)
+      allow read: if true;
+
+      // Authenticated users with valid profiles can create issues
+      allow create: if isAuthenticated() && hasValidUserProfile() &&
+                      request.resource.data.userId == request.auth.uid &&
+                      request.resource.data.keys().hasAll(['title', 'description', 'category', 'location']);
+
+      // Users can update their own issues (limited fields)
+      allow update: if isOwner(resource.data.userId) &&
+                      request.resource.data.diff(resource.data).affectedKeys()
+                        .hasOnly(['title', 'description', 'images', 'updatedAt']);
+
+      // Moderators can update issue status and add moderation notes
+      allow update: if isModerator() &&
+                      request.resource.data.diff(resource.data).affectedKeys()
+                        .hasOnly(['status', 'moderationNote', 'moderatedBy', 'moderatedAt']);
+
+      // Only admins can delete issues
+      allow delete: if isAdmin();
+    }
+
+    // Comments collection
+    match /comments/{commentId} {
+      // Anyone can read comments
+      allow read: if true;
+
+      // Authenticated users can create comments
+      allow create: if isAuthenticated() && hasValidUserProfile() &&
+                      request.resource.data.userId == request.auth.uid;
+
+      // Users can update their own comments (limited fields)
+      allow update: if isOwner(resource.data.userId) &&
+                      request.resource.data.diff(resource.data).affectedKeys()
+                        .hasOnly(['content', 'updatedAt']);
+
+      // Moderators can update comment status for moderation
+      allow update: if isModerator() &&
+                      request.resource.data.diff(resource.data).affectedKeys()
+                        .hasOnly(['status', 'moderationNote', 'moderatedBy', 'moderatedAt']);
+
+      // Only admins can delete comments
+      allow delete: if isAdmin();
+    }
+
+    // Votes collection
+    match /votes/{voteId} {
+      // Users can read votes on issues they can access
+      allow read: if true;
+
+      // Authenticated users can create/update their own votes
+      allow write: if isAuthenticated() && hasValidUserProfile() &&
+                     request.resource.data.userId == request.auth.uid;
+    }
+
+    // Reports collection
+    match /reports/{reportId} {
+      // Moderators can read all reports
+      allow read: if isModerator();
+
+      // Authenticated users can create reports
+      allow create: if isAuthenticated() && hasValidUserProfile() &&
+                      request.resource.data.reporterId == request.auth.uid;
+
+      // Moderators can update report status
+      allow update: if isModerator() &&
+                      request.resource.data.diff(resource.data).affectedKeys()
+                        .hasOnly(['status', 'reviewedBy', 'reviewedAt', 'reviewNote']);
+    }
+
+    // Admin and moderator collections
+    match /admins/{adminId} {
+      // Only existing admins can manage admin list
+      allow read, write: if isAdmin();
+    }
+
+    match /moderators/{moderatorId} {
+      // Admins can manage moderators
+      allow read, write: if isAdmin();
+    }
+
+    // Analytics and stats (read-only for admins)
+    match /stats/{document=**} {
+      allow read: if isAdmin();
+    }
+
+    // App configuration (read-only)
+    match /config/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

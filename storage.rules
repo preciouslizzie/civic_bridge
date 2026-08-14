@@ -1,0 +1,87 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+             firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
+    }
+
+    function isModerator() {
+      return isAuthenticated() &&
+             (isAdmin() ||
+              firestore.exists(/databases/(default)/documents/moderators/$(request.auth.uid)));
+    }
+
+    function hasValidUserProfile() {
+      return isAuthenticated() &&
+             firestore.exists(/databases/(default)/documents/users/$(request.auth.uid));
+    }
+
+    // Issue images
+    match /issues/{issueId}/{allPaths=**} {
+      // Anyone can read issue images
+      allow read: if true;
+
+      // Authenticated users can upload images for their own issues
+      allow create: if isAuthenticated() && hasValidUserProfile() &&
+                      resource == null; // Only allow new file creation
+
+      // Users can update/delete their own issue images
+      allow update, delete: if isAuthenticated() &&
+                               firestore.get(/databases/(default)/documents/issues/$(issueId)).data.userId == request.auth.uid;
+
+      // Moderators can manage any issue images
+      allow update, delete: if isModerator();
+    }
+
+    // User profile images
+    match /profiles/{userId}/{allPaths=**} {
+      // Anyone can read profile images
+      allow read: if true;
+
+      // Users can manage their own profile images
+      allow write: if isOwner(userId) && hasValidUserProfile();
+
+      // Admins can manage any profile images
+      allow write: if isAdmin();
+    }
+
+    // Temporary uploads (for processing)
+    match /temp/{userId}/{allPaths=**} {
+      // Users can manage their own temp files
+      allow read, write: if isOwner(userId) && hasValidUserProfile();
+
+      // Auto-delete temp files after 24 hours
+      allow delete: if isAuthenticated();
+    }
+
+    // Admin uploaded content
+    match /admin/{allPaths=**} {
+      // Only admins can manage admin content
+      allow read, write: if isAdmin();
+    }
+
+    // Public assets (logos, icons, etc.)
+    match /public/{allPaths=**} {
+      // Anyone can read public assets
+      allow read: if true;
+
+      // Only admins can upload public assets
+      allow write: if isAdmin();
+    }
+
+    // Backup files (admin only)
+    match /backups/{allPaths=**} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

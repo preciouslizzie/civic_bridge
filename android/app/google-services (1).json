@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "185353254668",
+    "project_id": "civic-bridge-1d71f",
+    "storage_bucket": "civic-bridge-1d71f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:185353254668:android:5ebe7d23a58192db0ffb29",
+        "android_client_info": {
+          "package_name": "com.example.civicbridge"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDrGIPBna5w04Xh0yPVivPsAG-OYsx41VY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
