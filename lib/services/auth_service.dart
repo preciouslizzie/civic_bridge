@@ -83,7 +83,11 @@ class AuthService {
   Future<void> saveFCMToken(String userId) async {
     final token = await FirebaseService().messaging.getToken();
     if (token != null) {
-      await _firestore.collection('users').doc(userId).update({
+      final userDocument = _firestore.collection('users').doc(userId);
+      final userSnapshot = await userDocument.get();
+      if (!userSnapshot.exists) return;
+
+      await userDocument.update({
         'fcmToken': token,
         'tokenUpdatedAt': Timestamp.now(),
       });

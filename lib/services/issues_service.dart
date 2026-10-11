@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:io';
 import '../models/issue.dart';
 import '../models/comment.dart';
@@ -238,7 +239,7 @@ class IssuesService {
         final ref = _storage.refFromURL(url);
         await ref.delete();
       } catch (e) {
-        print('Error deleting image: $e');
+        debugPrint('Error deleting image: $e');
       }
     }
   }

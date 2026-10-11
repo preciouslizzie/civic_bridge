@@ -106,7 +106,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
         const SizedBox(height: AppConstants.paddingSmall),
         DropdownButtonFormField<String>(
-          value: _selectedState,
+          initialValue: _selectedState,
           decoration: const InputDecoration(
             hintText: 'Select your state',
             prefixIcon: Icon(Icons.location_on),

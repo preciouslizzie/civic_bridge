@@ -88,7 +88,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         ),
         const SizedBox(height: AppConstants.paddingSmall),
         DropdownButtonFormField<String>(
-          value: _selectedState,
+          initialValue: _selectedState,
           decoration: const InputDecoration(
             hintText: 'All states',
             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -128,7 +128,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         ),
         const SizedBox(height: AppConstants.paddingSmall),
         DropdownButtonFormField<IssueCategory>(
-          value: _selectedCategory,
+          initialValue: _selectedCategory,
           decoration: const InputDecoration(
             hintText: 'All categories',
             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -163,7 +163,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         ),
         const SizedBox(height: AppConstants.paddingSmall),
         DropdownButtonFormField<IssueStatus>(
-          value: _selectedStatus,
+          initialValue: _selectedStatus,
           decoration: const InputDecoration(
             hintText: 'All statuses',
             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -201,7 +201,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           children: [
             Expanded(
               child: DropdownButtonFormField<String>(
-                value: _sortBy,
+                initialValue: _sortBy,
                 decoration: const InputDecoration(
                   contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),

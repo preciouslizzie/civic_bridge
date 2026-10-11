@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart' as app_auth;
-import '../../providers/issues_provider.dart';
-import '../../services/admin_service.dart';
 import '../../utils/constants.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -14,7 +10,6 @@ class AdminDashboardScreen extends StatefulWidget {
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   int _selectedIndex = 0;
-  final AdminService _adminService = AdminService();
 
   @override
   Widget build(BuildContext context) {

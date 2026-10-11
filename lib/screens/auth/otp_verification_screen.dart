@@ -7,11 +7,13 @@ import '../../utils/constants.dart';
 class OtpVerificationScreen extends StatefulWidget {
   final String phoneNumber;
   final String verificationId;
+  final Future<void> Function()? onResend;
 
   const OtpVerificationScreen({
     super.key,
     required this.phoneNumber,
     required this.verificationId,
+    this.onResend,
   });
 
   @override
@@ -102,21 +104,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       return;
     }
 
-    // Test mode
-    if (widget.verificationId == 'test_verification_id') {
-      if (otp == '123456') {
-        // Simulate successful verification
-        final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
-        // For test, we need to simulate sign in
-        // Since we can't easily simulate, let's navigate to onboarding
-        Navigator.of(context).pushReplacementNamed('/onboarding');
-        return;
-      } else {
-        _showError('Invalid test code. Use 123456');
-        return;
-      }
-    }
-
     setState(() => _isLoading = true);
 
     try {
@@ -129,21 +116,37 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       final success = await authProvider.signInWithCredential(credential);
 
       if (!success) {
-        _showError('Verification failed. Please try again.');
+        _showError(
+          authProvider.profileLoadError ??
+              'Verification failed. Please try again.',
+        );
       } else {
         if (!mounted) return;
         final destination = authProvider.userProfile == null ? '/onboarding' : '/home';
         Navigator.of(context).pushNamedAndRemoveUntil(destination, (route) => false);
       }
     } catch (e) {
-      _showError('Invalid code. Please try again.');
+      _showError(e.toString());
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   void _resendOtp() async {
-    // Navigate back to phone input screen
+    if (widget.onResend != null) {
+      try {
+        setState(() => _isLoading = true);
+        await widget.onResend!();
+      } catch (e) {
+        _showError('Unable to resend code. Please try again.');
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
+      return;
+    }
+
     Navigator.of(context).pop();
   }
 

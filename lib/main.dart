@@ -64,7 +64,9 @@ class MyApp extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppConstants.borderRadiusMedium),
+            borderRadius: BorderRadius.circular(
+              AppConstants.borderRadiusMedium,
+            ),
           ),
         ),
       ),
@@ -101,7 +103,9 @@ class MyApp extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppConstants.borderRadiusMedium),
+            borderRadius: BorderRadius.circular(
+              AppConstants.borderRadiusMedium,
+            ),
           ),
         ),
       ),
@@ -131,8 +135,31 @@ class AuthWrapper extends StatelessWidget {
       builder: (context, authProvider, child) {
         if (authProvider.isLoading) {
           return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (authProvider.isAuthenticated &&
+            authProvider.userProfile == null &&
+            authProvider.profileLoadError != null) {
+          return Scaffold(
             body: Center(
-              child: CircularProgressIndicator(),
+              child: Padding(
+                padding: const EdgeInsets.all(AppConstants.paddingLarge),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('Unable to load your account profile.'),
+                    const SizedBox(height: AppConstants.paddingMedium),
+                    Text(authProvider.profileLoadError!),
+                    const SizedBox(height: AppConstants.paddingMedium),
+                    ElevatedButton(
+                      onPressed: authProvider.refreshUserProfile,
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
             ),
           );
         }

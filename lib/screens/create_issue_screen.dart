@@ -26,7 +26,7 @@ class _CreateIssueScreenState extends State<CreateIssueScreen> {
   String? _selectedState;
   String? _selectedLga;
   bool _isAnonymous = false;
-  List<File> _selectedImages = [];
+  final List<File> _selectedImages = [];
   bool _isLoading = false;
 
   final ImagePicker _imagePicker = ImagePicker();
@@ -163,7 +163,7 @@ class _CreateIssueScreenState extends State<CreateIssueScreen> {
         ),
         const SizedBox(height: AppConstants.paddingSmall),
         DropdownButtonFormField<IssueCategory>(
-          value: _selectedCategory,
+          initialValue: _selectedCategory,
           decoration: const InputDecoration(
             hintText: 'Select category',
           ),
@@ -202,7 +202,7 @@ class _CreateIssueScreenState extends State<CreateIssueScreen> {
           children: [
             Expanded(
               child: DropdownButtonFormField<String>(
-                value: _selectedState,
+                initialValue: _selectedState,
                 decoration: const InputDecoration(
                   hintText: 'State',
                 ),
@@ -497,16 +497,20 @@ class _CreateIssueScreenState extends State<CreateIssueScreen> {
   Future<void> _getImage(ImageSource source) async {
     try {
       final pickedFile = await _imagePicker.pickImage(source: source);
+      if (!mounted) return;
       if (pickedFile != null) {
         File? croppedFile = await _cropImage(File(pickedFile.path));
+        if (!mounted) return;
         if (croppedFile != null) {
           File? compressedFile = await _compressImage(croppedFile);
+          if (!mounted) return;
           if (compressedFile != null) {
             setState(() => _selectedImages.add(compressedFile));
           }
         }
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error picking image: $e')),
       );
@@ -575,6 +579,7 @@ class _CreateIssueScreenState extends State<CreateIssueScreen> {
     final userId = authProvider.firebaseUser?.uid;
 
     if (user == null || userId == null) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please complete your profile first')),
       );
@@ -595,6 +600,7 @@ class _CreateIssueScreenState extends State<CreateIssueScreen> {
       images: _selectedImages,
     );
 
+    if (!mounted) return;
     setState(() => _isLoading = false);
 
     if (success) {

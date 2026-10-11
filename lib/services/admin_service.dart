@@ -39,7 +39,7 @@ class AdminService {
       'status': newStatus.name,
       'updatedBy': updatedBy,
       'updatedAt': Timestamp.now(),
-      if (reason != null) 'moderationNote': reason,
+      'moderationNote': ?reason,
     });
   }
 
@@ -113,7 +113,7 @@ class AdminService {
       'status': status,
       'reviewedBy': reviewedBy,
       'reviewedAt': Timestamp.now(),
-      if (reviewNote != null) 'reviewNote': reviewNote,
+      'reviewNote': ?reviewNote,
     });
   }
 

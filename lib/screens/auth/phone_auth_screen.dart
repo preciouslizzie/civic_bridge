@@ -16,7 +16,6 @@ class PhoneAuthScreen extends StatefulWidget {
 class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   final _phoneController = TextEditingController();
   PhoneNumber? _phoneNumber;
-  bool _isLoading = false;
   bool _isSendingOtp = false; // Prevent multiple sends
 
   @override
@@ -48,7 +47,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
 
               _buildPhoneInput(),
 
-              if (_isLoading)
+              if (_isSendingOtp)
                 const Center(child: CircularProgressIndicator())
               else
                 SizedBox(
@@ -103,84 +102,59 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
       return;
     }
 
-    final phoneNumber = _phoneNumber!.completeNumber;
-    print('Sending OTP to: $phoneNumber'); // Debug print
+    await _sendOtpForPhone(_phoneNumber!.completeNumber);
+  }
 
+  Future<void> _sendOtpForPhone(String phoneNumber) async {
     setState(() {
-      _isLoading = true;
       _isSendingOtp = true;
     });
 
     final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
-    
-    // Test mode for development
-    if (phoneNumber == '') {
-      print('Using test mode for phone number');
-      await Future.delayed(const Duration(seconds: 2)); // Simulate delay
-      setState(() {
-        _isLoading = false;
-        _isSendingOtp = false;
-      });
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => OtpVerificationScreen(
-            phoneNumber: phoneNumber,
-            verificationId: 'test_verification_id',
-          ),
-        ),
-      );
-      return;
-    }
 
     try {
       await authProvider.signInWithPhone(
         phoneNumber: phoneNumber,
         onCodeSent: (verificationId) {
-          print('OTP sent successfully, verificationId: $verificationId'); // Debug print
-          setState(() {
-            _isLoading = false;
-            _isSendingOtp = false;
-          });
+          if (!mounted) return;
+          setState(() => _isSendingOtp = false);
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => OtpVerificationScreen(
                 phoneNumber: phoneNumber,
                 verificationId: verificationId,
+                onResend: () async {
+                  if (!mounted) return;
+                  Navigator.of(context).pop();
+                  await _sendOtpForPhone(phoneNumber);
+                },
               ),
             ),
           );
         },
         onVerificationFailed: (e) {
-          print('Verification failed: ${e.message}'); // Debug print
-          setState(() {
-            _isLoading = false;
-            _isSendingOtp = false;
-          });
+          if (!mounted) return;
+          setState(() => _isSendingOtp = false);
           _showErrorDialog('Failed to send OTP: ${e.message}');
         },
         onVerificationCompleted: (credential) async {
-          print('Auto-verification completed'); // Debug print
-          // Auto-verification: sign in directly
           final success = await authProvider.signInWithCredential(credential);
-          setState(() {
-            _isLoading = false;
-            _isSendingOtp = false;
-          });
+          if (!mounted) return;
+          setState(() => _isSendingOtp = false);
           if (!success) {
-            _showErrorDialog('Auto-verification failed. Please enter OTP manually.');
+            _showErrorDialog(
+              authProvider.profileLoadError ??
+                  'Auto-verification failed. Please enter OTP manually.',
+            );
           } else {
-            if (!mounted) return;
             final destination = authProvider.userProfile == null ? '/onboarding' : '/home';
             Navigator.of(context).pushNamedAndRemoveUntil(destination, (route) => false);
           }
         },
       );
     } catch (e) {
-      print('Exception in sendOtp: $e'); // Debug print
-      setState(() {
-        _isLoading = false;
-        _isSendingOtp = false;
-      });
+      if (!mounted) return;
+      setState(() => _isSendingOtp = false);
       _showErrorDialog('An error occurred: $e');
     }
   }

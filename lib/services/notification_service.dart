@@ -1,6 +1,7 @@
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'dart:convert';
 import 'firebase_service.dart';
 
@@ -41,11 +42,11 @@ class NotificationService {
   }
 
   static Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-    print('Handling background message: ${message.messageId}');
+    debugPrint('Handling background message: ${message.messageId}');
   }
 
   void _handleForegroundMessage(RemoteMessage message) {
-    print('Received foreground message: ${message.notification?.title}');
+    debugPrint('Received foreground message: ${message.notification?.title}');
 
     if (message.notification != null) {
       _showLocalNotification(
@@ -76,12 +77,12 @@ class NotificationService {
       case 'issue_status_changed':
       case 'new_comment':
         if (issueId != null) {
-          print('Navigate to issue: $issueId');
+          debugPrint('Navigate to issue: $issueId');
         }
         break;
       case 'comment_flagged':
         if (commentId != null) {
-          print('Navigate to moderate comment: $commentId');
+          debugPrint('Navigate to moderate comment: $commentId');
         }
         break;
     }
@@ -185,7 +186,7 @@ class NotificationService {
       'data': data ?? {},
     };
 
-    print('Sending notification to user $userId: $message');
+    debugPrint('Sending notification to user $userId: $message');
   }
 
   Future<void> sendNotificationToMultipleUsers({
@@ -218,7 +219,7 @@ class NotificationService {
       'data': data ?? {},
     };
 
-    print('Sending multicast notification: $message');
+    debugPrint('Sending multicast notification: $message');
   }
 
   Future<void> sendNotificationToAllUsers({
@@ -245,7 +246,7 @@ class NotificationService {
       'data': data ?? {},
     };
 
-    print('Sending broadcast notification: $message');
+    debugPrint('Sending broadcast notification: $message');
   }
 
   Future<void> notifyIssueStatusChange({
